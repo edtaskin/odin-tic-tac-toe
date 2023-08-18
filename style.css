@@ -1,0 +1,37 @@
+html, body {
+    height: 100%;
+    --cell-size: 120px;
+}
+
+.main-container {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    gap: 100px;
+    margin-top: 20%;
+}
+
+.game-grid-container {
+    display: grid;
+    grid-template-rows: repeat(3, var(--cell-size));
+    grid-template-columns: repeat(3, var(--cell-size));
+}
+
+.cell {
+    background-color: grey;
+    font-size: 2rem;
+    width: var(--cell-size);
+    height: var(--cell-size);
+    --game-border: 1px solid black;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}   
+
+.row0, .row1 {
+    border-bottom: var(--game-border);
+}
+
+.col0, .col1 {
+    border-right: var(--game-border);
+}
