@@ -23,15 +23,32 @@ html, body {
     width: var(--cell-size);
     height: var(--cell-size);
     --game-border: 1px solid black;
+    border: 1px solid black;
     display: flex;
     justify-content: center;
     align-items: center;
 }   
 
-.row0, .row1 {
+/*.row0, .row1 {
     border-bottom: var(--game-border);
 }
 
 .col0, .col1 {
     border-right: var(--game-border);
+}
+*/
+
+.place-marker-animation {
+    animation: placeMarker 0.5s forwards;
+}
+
+@keyframes placeMarker {
+    0% {
+        transform: scale(1.5);
+        opacity: 0;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
 }

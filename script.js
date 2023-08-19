@@ -12,13 +12,14 @@ const game = (() => {
         [2,4,6]
     ]
 
-    const boardController = (() => {
+    const board = (() => {
         const _board = [["", "", ""], ["", "", ""], ["", "", ""]];
 
         const getCell = function(row, col) {
             return _board[row][col];
         }
         const setCell = function(row, col, val) {
+            console.log(_board);
             _board[row][col] = val;
         }
         const containsTriplet = function() {
@@ -34,9 +35,10 @@ const game = (() => {
         }
         const getEmptyCells = function() {
             const emptyCells = [];
-            for (let i = 0; i < triplets.length; i++) {
-                for (let j = 0; j < triplets.length; j++) {
-                    emptyCells.push([i, j]);
+            for (let i = 0; i < GRID_SIZE; i++) {
+                for (let j = 0; j < GRID_SIZE; j++) {
+                    if (_board[i][j] === "")
+                        emptyCells.push([i, j]);
                 }
             }
             return emptyCells;
@@ -59,7 +61,7 @@ const game = (() => {
     const player = (() => {
         const mark = "X";
         const selectCell = function(row, col) {
-            boardController.setCell(row, col, mark);
+            board.setCell(row, col, mark);
             //if (checkGameOver()) endGame(); // TODO Check here or in frontend?
             playerTurn = !playerTurn;
         }
@@ -75,12 +77,21 @@ const game = (() => {
     const cpu = (() => {
         const mark = "O";
         const getMark = player.getMark;
-        const getRandomEmptyCell = function() {
-
+        const _getRandomEmptyCell = function() {
+            const emptyCells = board.getEmptyCells();
+            const i = Math.trunc(Math.random() * emptyCells.length);
+            console.log(emptyCells);
+            console.log(`emptyCells[${i}]: ${emptyCells[i]}`);
+            return emptyCells[i];
         }
         const selectCell = function() {
-            const [row, col] = getRandomEmptyCell();
-            player.selectCell(row, col);
+            const [row, col] = _getRandomEmptyCell();
+            console.log(row, col);
+
+            board.setCell(row, col, mark);
+            //if (checkGameOver()) endGame(); // TODO Check here or in frontend?
+            playerTurn = !playerTurn;
+            return [row, col];
         }
         return {
             getMark,
@@ -89,7 +100,7 @@ const game = (() => {
     })();
 
     function checkGameOver() {
-        return boardController.containsTriplet();
+        return board.containsTriplet();
     }
 
     function endGame() {
@@ -122,7 +133,8 @@ const grid = document.querySelector(".game-grid-container");
 const playerContainer = document.querySelector(".player-container");
 const cpuContainer = document.querySelector(".cpu-container");
 const GRID_SIZE = 3;
-const IMAGE_WIDTH = 250;
+const IMAGE_WIDTH = 150;
+const MARKER_WIDTH = 100;
 
 playerContainer.innerHTML = `<img src="img/man-raising-hand.png" width=${IMAGE_WIDTH}>`;
 cpuContainer.innerHTML = `<img src="img/robot_face.png" width=${IMAGE_WIDTH}>`;
@@ -134,24 +146,46 @@ for (let i = 0; i < GRID_SIZE; i++) {
         cell.classList.add(`row${i}`);
         cell.classList.add(`col${j}`);
 
-        cell.addEventListener("click", placeMark)
+        cell.addEventListener("click", playerChoice)
 
         grid.appendChild(cell);
     }
 }
 
 
-function placeMark(e) {
+function playerChoice(e) {
     console.log(`Clicked! isPlayerTurn: ${game.isPlayerTurn()}`);
     if (!game.isPlayerTurn()) return;
-    playerContainer.innerHTML = `<img src="img/man.png" width=${IMAGE_WIDTH}>`;
+    changePlayerImage(playerContainer, "man.png");
+
     const row = e.target.id / GRID_SIZE;
     const col = e.target.id % GRID_SIZE;
     game.getPlayer().selectCell(row, col);
-    e.target.innerHTML = `<img src="img/x.png" width=100>`; // TODO Make dynamic. Can we load images before and then make it visible.
+    placeMarker(e.target, "x");
+
     setTimeout(() => {
         // TODO CPU turn
-        if (!game.checkGameOver())
-            playerContainer.innerHTML = `<img src="img/man-raising-hand.png" width=${IMAGE_WIDTH}>`;
+        changePlayerImage("man-raising-hand.png");
+        cpuChoice();
     }, 2000);
+}
+
+function cpuChoice() {
+    const cpu = game.getCPU();
+    const [row, col] = cpu.selectCell();
+    const cell = grid.children[row * GRID_SIZE + col];
+    placeMarker(cell, "o");
+}
+
+
+const placeImage = function(element, imgName, imgWidth=IMAGE_WIDTH, imgClass) {
+    element.innerHTML = `<img src=${"img/" + imgName} ${imgClass ?  `class=${imgClass}`: ""} width=${imgWidth}>`
+}
+
+function placeMarker(cell, marker) {
+    placeImage(cell, marker === "x" ? "x.png" : "o.png", MARKER_WIDTH, "place-marker-animation");
+}
+
+function changePlayerImage(imgName) {
+    placeImage(playerContainer, imgName, IMAGE_WIDTH);
 }
