@@ -11,6 +11,10 @@ html, body {
     margin-top: 20%;
 }
 
+.left-container {
+    flex-shrink: 0;
+}
+
 .game-grid-container {
     display: grid;
     grid-template-rows: repeat(3, var(--cell-size));
@@ -51,4 +55,28 @@ html, body {
         transform: scale(1);
         opacity: 1;
     }
+}
+
+.game-over-msg {
+    font-family: 'Victor Mono', monospace;
+    text-align: center;
+    font-size: 3rem;
+    font-weight: 900;
+    margin-bottom: 20px;
+}
+
+.hidden {
+    display: none;
+}
+
+.game-over-msg#lose {
+    color: red;
+}
+
+.game-over-msg#win {
+    color: #3aeb34;
+}
+
+.game-over-msg#tie {
+    color: blue;
 }

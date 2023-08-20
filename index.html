@@ -6,6 +6,9 @@
     <title>Tic Tac Toe</title>
     <link rel="stylesheet" href="style.css">
     <script src="script.js" defer></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Victor+Mono&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="main-container">
@@ -13,6 +16,9 @@
             <div class="player-container"></div>
         </div>
         <div class="middle-container">
+            <div class="game-over-msg hidden" id="lose">YOU LOSE!</div>
+            <div class="game-over-msg hidden" id="win">YOU WIN!</div>
+            <div class="game-over-msg hidden" id="tie">TIE!</div>
             <div class="game-grid-container"></div>
         </div>
         <div class="right-container">

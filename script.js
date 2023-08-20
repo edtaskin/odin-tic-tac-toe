@@ -1,3 +1,4 @@
+// Backend
 const game = (() => {
     let playerTurn = true;
     let playerWin = null; 
@@ -11,27 +12,42 @@ const game = (() => {
         [0,4,8],
         [2,4,6]
     ]
+    
+    const TIE = "tie";
+    const P_WIN = "win";
+    const P_LOSE = "lose";
 
     const board = (() => {
         const _board = [["", "", ""], ["", "", ""], ["", "", ""]];
+        let _full = false;
+        let _triplet = null;
 
         const getCell = function(row, col) {
             return _board[row][col];
+        }
+        const getCellByIndex = function(index) {
+            const [row, col] = getRowColFromIndex(index);
+            return getCell(row, col);
         }
         const setCell = function(row, col, val) {
             console.log(_board);
             _board[row][col] = val;
         }
         const containsTriplet = function() {
+            if (_triplet) return _triplet;
             for (let i = 0; i < triplets.length; i++) {
                 const [c1, c2, c3] = triplets[i];
                 
-                if (_board[c1] !== "" && _board[c1] === _board[c2] && _board[c1] === _board[c3]) {
+                if (getCellByIndex(c1) !== "" && 
+                    getCellByIndex(c1) === getCellByIndex(c2) &&
+                    getCellByIndex(c2) === getCellByIndex(c3)) {
+                    console.log(`Here: c1,c2,c3=${c1}, ${c2}, ${c3}`);
                     playerWin = playerTurn;
-                    return true;
+                    _triplet = triplets[i];
+                    return _triplet;
                 }   
             }
-            return false;
+            return null;
         }
         const getEmptyCells = function() {
             const emptyCells = [];
@@ -43,18 +59,19 @@ const game = (() => {
             }
             return emptyCells;
         }
-        const getDiagonals = function() {
-            return [
-                [_board[0][0]]
-            ];
+        const isFull = function() {
+            if (_full) return _full;
+            _full = getEmptyCells().length === 0;
+            return _full;
         }    
 
         return {
             getCell,
+            getCellByIndex,
             setCell,
             containsTriplet,
             getEmptyCells,
-            getDiagonals,
+            isFull,
         }
     })();
 
@@ -62,7 +79,6 @@ const game = (() => {
         const mark = "X";
         const selectCell = function(row, col) {
             board.setCell(row, col, mark);
-            //if (checkGameOver()) endGame(); // TODO Check here or in frontend?
             playerTurn = !playerTurn;
         }
         const getMark = function() {
@@ -80,16 +96,11 @@ const game = (() => {
         const _getRandomEmptyCell = function() {
             const emptyCells = board.getEmptyCells();
             const i = Math.trunc(Math.random() * emptyCells.length);
-            console.log(emptyCells);
-            console.log(`emptyCells[${i}]: ${emptyCells[i]}`);
             return emptyCells[i];
         }
         const selectCell = function() {
             const [row, col] = _getRandomEmptyCell();
-            console.log(row, col);
-
             board.setCell(row, col, mark);
-            //if (checkGameOver()) endGame(); // TODO Check here or in frontend?
             playerTurn = !playerTurn;
             return [row, col];
         }
@@ -100,11 +111,19 @@ const game = (() => {
     })();
 
     function checkGameOver() {
-        return board.containsTriplet();
+        console.log(`isFull: ${board.isFull()}`);
+        console.log(`containsTriplet: ${board.containsTriplet()}`);
+        return board.isFull() || board.containsTriplet();
     }
 
     function endGame() {
-
+        if (board.isFull()) return TIE;
+        const triplet = board.containsTriplet();
+        console.log(board.getCellByIndex(triplet[0]));
+        console.log(player.getMark());
+        console.log(board.getCellByIndex(triplet[0]) === player.getMark());
+        if (board.getCellByIndex(triplet[0]) === player.getMark()) return P_WIN;
+        else return P_LOSE;
     }
 
     const getPlayer = function() {
@@ -118,26 +137,47 @@ const game = (() => {
     const isPlayerTurn = function()  {
         return playerTurn;
     }
+
+    // Helper functions
+    const getRowColFromIndex = function(index) {
+        const row = Math.trunc(index / GRID_SIZE);
+        const col = index % GRID_SIZE;
+        return [row, col];
+    }
+    
+    const getIndexFromRowCol = function(row, col) {
+        return row * GRID_SIZE + col;
+    }
+    
     
     return {
+        TIE,
+        P_WIN,
+        P_LOSE,
         getPlayer,
         getCPU,
         isPlayerTurn,
         checkGameOver,
         endGame,
+        getRowColFromIndex,
+        getIndexFromRowCol,
     }
 })();
 
-
-const grid = document.querySelector(".game-grid-container");
-const playerContainer = document.querySelector(".player-container");
-const cpuContainer = document.querySelector(".cpu-container");
+// Frontend
 const GRID_SIZE = 3;
 const IMAGE_WIDTH = 150;
 const MARKER_WIDTH = 100;
 
-playerContainer.innerHTML = `<img src="img/man-raising-hand.png" width=${IMAGE_WIDTH}>`;
-cpuContainer.innerHTML = `<img src="img/robot_face.png" width=${IMAGE_WIDTH}>`;
+const grid = document.querySelector(".game-grid-container");
+const playerContainer = document.querySelector(".player-container");
+const cpuContainer = document.querySelector(".cpu-container");
+const winMsg = document.querySelector(".game-over-msg#win");
+const lossMsg = document.querySelector(".game-over-msg#lose");
+const tieMsg = document.querySelector(".game-over-msg#tie");
+
+placeImage(playerContainer, "man-raising-hand.png");
+placeImage(cpuContainer, "robot.png");
 
 for (let i = 0; i < GRID_SIZE; i++) {
     for (let j = 0; j < GRID_SIZE; j++) {
@@ -145,40 +185,57 @@ for (let i = 0; i < GRID_SIZE; i++) {
         cell.classList.add("cell");
         cell.classList.add(`row${i}`);
         cell.classList.add(`col${j}`);
+        cell.id = `${i * GRID_SIZE + j}`;
 
-        cell.addEventListener("click", playerChoice)
+        cell.addEventListener("click", e =>  {
+            playerTurn(e);
+            if (checkGameOver()) return;
+            cpuTurn();
+            if (checkGameOver()) return;
+        });
 
         grid.appendChild(cell);
     }
 }
 
 
-function playerChoice(e) {
-    console.log(`Clicked! isPlayerTurn: ${game.isPlayerTurn()}`);
+function playerTurn(e) {
+    console.log(e);
     if (!game.isPlayerTurn()) return;
-    changePlayerImage(playerContainer, "man.png");
+    changePlayerImage("man.png");
 
-    const row = e.target.id / GRID_SIZE;
-    const col = e.target.id % GRID_SIZE;
+    const [row, col] = game.getRowColFromIndex(e.target.id);
     game.getPlayer().selectCell(row, col);
     placeMarker(e.target, "x");
+}
 
+function cpuTurn() {
+    changePlayerImage("man-raising-hand.png");
+    const cpu = game.getCPU();
+    const [row, col] = cpu.selectCell();
+    const cell = grid.children[game.getIndexFromRowCol(row, col)];
     setTimeout(() => {
-        // TODO CPU turn
-        changePlayerImage("man-raising-hand.png");
-        cpuChoice();
+        placeMarker(cell, cpu.getMark());
     }, 2000);
 }
 
-function cpuChoice() {
-    const cpu = game.getCPU();
-    const [row, col] = cpu.selectCell();
-    const cell = grid.children[row * GRID_SIZE + col];
-    placeMarker(cell, "o");
+
+function checkGameOver() {
+    if (!game.checkGameOver()) return false;
+    console.log(game.TIE, game.P_WIN, game.P_LOSE);
+    const result = game.endGame();
+    console.log(`Result: ${result}`);
+    if (result === game.TIE)
+        tieMsg.classList.remove("hidden");
+    else if (result === game.P_WIN)
+        winMsg.classList.remove("hidden");
+    else 
+        lossMsg.classList.remove("hidden");
+    return true;
 }
 
-
-const placeImage = function(element, imgName, imgWidth=IMAGE_WIDTH, imgClass) {
+// Helper functions
+function placeImage(element, imgName, imgWidth=IMAGE_WIDTH, imgClass) {
     element.innerHTML = `<img src=${"img/" + imgName} ${imgClass ?  `class=${imgClass}`: ""} width=${imgWidth}>`
 }
 
