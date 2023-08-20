@@ -29,7 +29,6 @@ const game = (() => {
             return getCell(row, col);
         }
         const setCell = function(row, col, val) {
-            console.log(_board);
             _board[row][col] = val;
         }
         const containsTriplet = function() {
@@ -40,8 +39,6 @@ const game = (() => {
                 if (getCellByIndex(c1) !== "" && 
                     getCellByIndex(c1) === getCellByIndex(c2) &&
                     getCellByIndex(c2) === getCellByIndex(c3)) {
-                    console.log(`Here: c1,c2,c3=${c1}, ${c2}, ${c3}`);
-                    playerWin = playerTurn;
                     _triplet = winningTriplets[i];
                     return _triplet;
                 }   
@@ -169,9 +166,13 @@ const cpuContainer = document.querySelector(".cpu-container");
 const winMsg = document.querySelector(".game-over-msg#win");
 const lossMsg = document.querySelector(".game-over-msg#lose");
 const tieMsg = document.querySelector(".game-over-msg#tie");
+const isPlayerTurnContainer = document.querySelector(".left-container .is-current-player");
+const isCPUTurnContainer = document.querySelector(".right-container .is-current-player");
 
 placeImage(playerContainer, "man-raising-hand.png");
 placeImage(cpuContainer, "robot.png");
+placeImage(isPlayerTurnContainer, "point_up.png", IMAGE_WIDTH / 2); // Player starts first
+placeImage(isCPUTurnContainer, "point_up.png", IMAGE_WIDTH / 2, "invisible");
 
 for (let i = 0; i < GRID_SIZE; i++) {
     for (let j = 0; j < GRID_SIZE; j++) {
@@ -182,6 +183,7 @@ for (let i = 0; i < GRID_SIZE; i++) {
         cell.id = `${i * GRID_SIZE + j}`;
 
         cell.addEventListener("click", e =>  {
+            toggleCurrentPlayerUI();
             playerTurn(e);
             if (checkGameOver()) return;
             cpuTurn().then(() => checkGameOver());
@@ -203,42 +205,52 @@ function cpuTurn() {
     const cpu = game.getCPU();
     const [row, col] = cpu.selectCell();
     const cell = grid.children[game.getIndexFromRowCol(row, col)];
-    return new Promise(function(resolve) {
+    return new Promise(() => {
         setTimeout(() => {
             placeMarker(cell, cpu.getMark());
-        }, 2000);
+        }, 1500);
     });
 }
 
 
 function checkGameOver() {
     if (!game.checkGameOver()) return false;
-    console.log(game.TIE, game.P_WIN, game.P_LOSE);
     const result = game.endGame();
-    console.log(`Result: ${result}`);
     if (result === game.TIE) {
         tieMsg.classList.remove("hidden");
     }
     else if (result === game.P_WIN) {
-        winMsg.classList.remove("hidden");
-        changePlayerImage("man-gesturing-ok.png")
+        changePlayerImage("man-gesturing-ok.png").then(() => winMsg.classList.remove("hidden"));
     }
     else {
-        lossMsg.classList.remove("hidden");
-        changePlayerImage("man-facepalming.png");
+        changePlayerImage("man-facepalming.png").then(() => lossMsg.classList.remove("hidden"));
     } 
     return true;
 }
 
 // Helper functions
 function placeImage(element, imgName, imgWidth=IMAGE_WIDTH, imgClass) {
-    element.innerHTML = `<img src=${"img/" + imgName} ${imgClass ?  `class=${imgClass}`: ""} width=${imgWidth}>`
+    return new Promise(resolve => {
+        element.innerHTML = "";
+        const imgElement = document.createElement("img");
+        imgElement.src = "img/" + imgName;
+        imgElement.width = imgWidth;
+        if (imgClass) imgElement.classList.add(imgClass);
+
+        element.appendChild(imgElement);
+        imgElement.onload = () => resolve();
+    });
 }
 
 function placeMarker(cell, marker) {
-    placeImage(cell, marker === "x" ? "x.png" : "o.png", MARKER_WIDTH, "place-marker-animation");
+    return placeImage(cell, marker === "x" ? "x.png" : "o.png", MARKER_WIDTH, "place-marker-animation");
 }
 
 function changePlayerImage(imgName) {
-    placeImage(playerContainer, imgName, IMAGE_WIDTH);
+    return placeImage(playerContainer, imgName, IMAGE_WIDTH);
+}
+
+function toggleCurrentPlayerUI() {
+    isPlayerTurnContainer.firstChild.classList.toggle("invisible");
+    isCPUTurnContainer.firstChild.classList.toggle("invisible");
 }

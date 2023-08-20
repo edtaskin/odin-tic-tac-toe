@@ -12,8 +12,12 @@ html, body {
     margin-top: 10%;
 }
 
-.left-container {
-    flex-shrink: 0;
+.left-container, .right-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    justify-content: center;
+    align-items: center;
 }
 
 .game-grid-container {
@@ -80,4 +84,8 @@ html, body {
 
 .game-over-msg#tie {
     color: blue;
+}
+
+.invisible {
+    opacity: 0;
 }
