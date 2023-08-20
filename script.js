@@ -1,8 +1,7 @@
 // Backend
 const game = (() => {
     let playerTurn = true;
-    let playerWin = null; 
-    const triplets = [
+    const winningTriplets = [
         [0,1,2],
         [3,4,5],
         [6,7,8],
@@ -35,15 +34,15 @@ const game = (() => {
         }
         const containsTriplet = function() {
             if (_triplet) return _triplet;
-            for (let i = 0; i < triplets.length; i++) {
-                const [c1, c2, c3] = triplets[i];
+            for (let i = 0; i < winningTriplets.length; i++) {
+                const [c1, c2, c3] = winningTriplets[i];
                 
                 if (getCellByIndex(c1) !== "" && 
                     getCellByIndex(c1) === getCellByIndex(c2) &&
                     getCellByIndex(c2) === getCellByIndex(c3)) {
                     console.log(`Here: c1,c2,c3=${c1}, ${c2}, ${c3}`);
                     playerWin = playerTurn;
-                    _triplet = triplets[i];
+                    _triplet = winningTriplets[i];
                     return _triplet;
                 }   
             }
@@ -111,17 +110,12 @@ const game = (() => {
     })();
 
     function checkGameOver() {
-        console.log(`isFull: ${board.isFull()}`);
-        console.log(`containsTriplet: ${board.containsTriplet()}`);
         return board.isFull() || board.containsTriplet();
     }
 
     function endGame() {
         if (board.isFull()) return TIE;
         const triplet = board.containsTriplet();
-        console.log(board.getCellByIndex(triplet[0]));
-        console.log(player.getMark());
-        console.log(board.getCellByIndex(triplet[0]) === player.getMark());
         if (board.getCellByIndex(triplet[0]) === player.getMark()) return P_WIN;
         else return P_LOSE;
     }
@@ -190,20 +184,15 @@ for (let i = 0; i < GRID_SIZE; i++) {
         cell.addEventListener("click", e =>  {
             playerTurn(e);
             if (checkGameOver()) return;
-            cpuTurn();
-            if (checkGameOver()) return;
+            cpuTurn().then(() => checkGameOver());
         });
-
         grid.appendChild(cell);
     }
 }
 
 
 function playerTurn(e) {
-    console.log(e);
     if (!game.isPlayerTurn()) return;
-    changePlayerImage("man.png");
-
     const [row, col] = game.getRowColFromIndex(e.target.id);
     game.getPlayer().selectCell(row, col);
     placeMarker(e.target, "x");
@@ -214,9 +203,11 @@ function cpuTurn() {
     const cpu = game.getCPU();
     const [row, col] = cpu.selectCell();
     const cell = grid.children[game.getIndexFromRowCol(row, col)];
-    setTimeout(() => {
-        placeMarker(cell, cpu.getMark());
-    }, 2000);
+    return new Promise(function(resolve) {
+        setTimeout(() => {
+            placeMarker(cell, cpu.getMark());
+        }, 2000);
+    });
 }
 
 
@@ -225,12 +216,17 @@ function checkGameOver() {
     console.log(game.TIE, game.P_WIN, game.P_LOSE);
     const result = game.endGame();
     console.log(`Result: ${result}`);
-    if (result === game.TIE)
+    if (result === game.TIE) {
         tieMsg.classList.remove("hidden");
-    else if (result === game.P_WIN)
+    }
+    else if (result === game.P_WIN) {
         winMsg.classList.remove("hidden");
-    else 
+        changePlayerImage("man-gesturing-ok.png")
+    }
+    else {
         lossMsg.classList.remove("hidden");
+        changePlayerImage("man-facepalming.png");
+    } 
     return true;
 }
 
