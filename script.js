@@ -1,6 +1,6 @@
 // Backend
 const game = (() => {
-    let playerTurn = true;
+    let _playerTurn = true;
     const winningTriplets = [
         [0,1,2],
         [3,4,5],
@@ -75,7 +75,7 @@ const game = (() => {
         const mark = "X";
         const selectCell = function(row, col) {
             board.setCell(row, col, mark);
-            playerTurn = !playerTurn;
+            _playerTurn = !_playerTurn;
         }
         const getMark = function() {
             return mark;
@@ -97,7 +97,7 @@ const game = (() => {
         const selectCell = function() {
             const [row, col] = _getRandomEmptyCell();
             board.setCell(row, col, mark);
-            playerTurn = !playerTurn;
+            _playerTurn = !_playerTurn;
             return [row, col];
         }
         return {
@@ -126,7 +126,7 @@ const game = (() => {
     }
 
     const isPlayerTurn = function()  {
-        return playerTurn;
+        return _playerTurn;
     }
 
     // Helper functions
@@ -169,6 +169,9 @@ const tieMsg = document.querySelector(".game-over-msg#tie");
 const isPlayerTurnContainer = document.querySelector(".left-container .is-current-player");
 const isCPUTurnContainer = document.querySelector(".right-container .is-current-player");
 
+let gameOver = false;
+let isPlayerTurn = true;
+
 placeImage(playerContainer, "man-raising-hand.png");
 placeImage(cpuContainer, "robot.png");
 placeImage(isPlayerTurnContainer, "point_up.png", IMAGE_WIDTH / 2); // Player starts first
@@ -183,9 +186,10 @@ for (let i = 0; i < GRID_SIZE; i++) {
         cell.id = `${i * GRID_SIZE + j}`;
 
         cell.addEventListener("click", e =>  {
+            console.log(`isPlayerTurn: ${isPlayerTurn}`);
+            if (!isPlayerTurn || gameOver) return;
             toggleCurrentPlayerUI();
-            playerTurn(e);
-            if (checkGameOver()) return;
+            playerTurn(e).then(() => checkGameOver());
             cpuTurn().then(() => checkGameOver());
         });
         grid.appendChild(cell);
@@ -194,10 +198,10 @@ for (let i = 0; i < GRID_SIZE; i++) {
 
 
 function playerTurn(e) {
-    if (!game.isPlayerTurn()) return;
     const [row, col] = game.getRowColFromIndex(e.target.id);
     game.getPlayer().selectCell(row, col);
-    placeMarker(e.target, "x");
+    isPlayerTurn = !isPlayerTurn;
+    return placeMarker(e.target, "x");
 }
 
 function cpuTurn() {
@@ -208,13 +212,14 @@ function cpuTurn() {
     return new Promise(() => {
         setTimeout(() => {
             placeMarker(cell, cpu.getMark());
-        }, 1500);
+            isPlayerTurn = !isPlayerTurn;
+        }, 500);
     });
 }
 
 
 function checkGameOver() {
-    if (!game.checkGameOver()) return false;
+    if (!game.checkGameOver()) return;
     const result = game.endGame();
     if (result === game.TIE) {
         tieMsg.classList.remove("hidden");
@@ -225,7 +230,9 @@ function checkGameOver() {
     else {
         changePlayerImage("man-facepalming.png").then(() => lossMsg.classList.remove("hidden"));
     } 
-    return true;
+    isPlayerTurnContainer.firstChild.classList.add("invisible");
+    isCPUTurnContainer.firstChild.classList.add("invisible");
+    gameOver = true;
 }
 
 // Helper functions
