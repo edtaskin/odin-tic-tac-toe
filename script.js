@@ -17,19 +17,26 @@ const game = (() => {
     const P_LOSE = "lose";
 
     const board = (() => {
-        const _board = [["", "", ""], ["", "", ""], ["", "", ""]];
+        let _board = [["", "", ""], ["", "", ""], ["", "", ""]];
         let _full = false;
         let _triplet = null;
 
         const getCell = function(row, col) {
             return _board[row][col];
         }
+
         const getCellByIndex = function(index) {
             const [row, col] = getRowColFromIndex(index);
             return getCell(row, col);
         }
+
         const setCell = function(row, col, val) {
             _board[row][col] = val;
+        }
+
+        const setCellByIndex = function(index, val) {
+            const [row, col] = getRowColFromIndex(index);
+            return setCell(row, col, val);
         }
         const containsTriplet = function() {
             if (_triplet) return _triplet;
@@ -45,6 +52,7 @@ const game = (() => {
             }
             return null;
         }
+
         const getEmptyCells = function() {
             const emptyCells = [];
             for (let i = 0; i < GRID_SIZE; i++) {
@@ -55,19 +63,28 @@ const game = (() => {
             }
             return emptyCells;
         }
+
         const isFull = function() {
             if (_full) return _full;
             _full = getEmptyCells().length === 0;
             return _full;
         }    
 
+        const clearBoard = function() {
+            _board = [["", "", ""], ["", "", ""], ["", "", ""]];
+            _full = false;
+            _triplet = null;
+        }
+
         return {
             getCell,
             getCellByIndex,
             setCell,
+            setCellByIndex,
             containsTriplet,
             getEmptyCells,
             isFull,
+            clearBoard,
         }
     })();
 
@@ -88,18 +105,22 @@ const game = (() => {
 
     const cpu = (() => {
         const mark = "O";
+
         const getMark = player.getMark;
+
         const _getRandomEmptyCell = function() {
             const emptyCells = board.getEmptyCells();
             const i = Math.trunc(Math.random() * emptyCells.length);
             return emptyCells[i];
         }
+
         const selectCell = function() {
             const [row, col] = _getRandomEmptyCell();
             board.setCell(row, col, mark);
             _playerTurn = !_playerTurn;
             return [row, col];
         }
+
         return {
             getMark,
             selectCell,
@@ -129,6 +150,11 @@ const game = (() => {
         return _playerTurn;
     }
 
+    const restartGame = function() {
+        _playerTurn = true;
+        board.clearBoard();
+    }
+
     // Helper functions
     const getRowColFromIndex = function(index) {
         const row = Math.trunc(index / GRID_SIZE);
@@ -150,6 +176,7 @@ const game = (() => {
         isPlayerTurn,
         checkGameOver,
         endGame,
+        restartGame,
         getRowColFromIndex,
         getIndexFromRowCol,
     }
@@ -168,14 +195,16 @@ const lossMsg = document.querySelector(".game-over-msg#lose");
 const tieMsg = document.querySelector(".game-over-msg#tie");
 const isPlayerTurnContainer = document.querySelector(".left-container .is-current-player");
 const isCPUTurnContainer = document.querySelector(".right-container .is-current-player");
+const playAgainButton = document.querySelector(".play-again-button");
 
 let gameOver = false;
 let isPlayerTurn = true;
 
-placeImage(playerContainer, "man-raising-hand.png");
-placeImage(cpuContainer, "robot.png");
-placeImage(isPlayerTurnContainer, "point_up.png", IMAGE_WIDTH / 2); // Player starts first
-placeImage(isCPUTurnContainer, "point_up.png", IMAGE_WIDTH / 2, "invisible");
+playAgainButton.addEventListener('click', () => {
+    if (!gameOver) return;
+    game.restartGame();
+    startGame();
+});
 
 for (let i = 0; i < GRID_SIZE; i++) {
     for (let j = 0; j < GRID_SIZE; j++) {
@@ -186,7 +215,6 @@ for (let i = 0; i < GRID_SIZE; i++) {
         cell.id = `${i * GRID_SIZE + j}`;
 
         cell.addEventListener("click", e =>  {
-            console.log(`isPlayerTurn: ${isPlayerTurn}`);
             if (!isPlayerTurn || gameOver) return;
             toggleCurrentPlayerUI();
             playerTurn(e).then(() => checkGameOver());
@@ -196,6 +224,27 @@ for (let i = 0; i < GRID_SIZE; i++) {
     }
 }
 
+startGame();
+
+function setPlayers() {
+    placeImage(playerContainer, "man-raising-hand.png");
+    placeImage(cpuContainer, "robot.png");
+    placeImage(isPlayerTurnContainer, "point_up.png", IMAGE_WIDTH / 2); // Player starts first
+    placeImage(isCPUTurnContainer, "point_up.png", IMAGE_WIDTH / 2, "invisible");
+}
+
+
+function startGame() {
+    setPlayers();
+    hideGameOverMessages();
+    gameOver = false;
+    isPlayerTurn = true;
+    playAgainButton.classList.add("hidden");
+    
+    for (const child of grid.children) {
+        child.innerHTML = "";
+    }
+}
 
 function playerTurn(e) {
     const [row, col] = game.getRowColFromIndex(e.target.id);
@@ -232,6 +281,7 @@ function checkGameOver() {
     } 
     isPlayerTurnContainer.firstChild.classList.add("invisible");
     isCPUTurnContainer.firstChild.classList.add("invisible");
+    playAgainButton.classList.remove("hidden");
     gameOver = true;
 }
 
@@ -260,4 +310,10 @@ function changePlayerImage(imgName) {
 function toggleCurrentPlayerUI() {
     isPlayerTurnContainer.firstChild.classList.toggle("invisible");
     isCPUTurnContainer.firstChild.classList.toggle("invisible");
+}
+
+function hideGameOverMessages() {
+    tieMsg.classList.add("hidden");
+    winMsg.classList.add("hidden");
+    lossMsg.classList.add("hidden");
 }

@@ -12,6 +12,14 @@ html, body {
     margin-top: 10%;
 }
 
+.middle-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    justify-content: center;
+    align-items: center;
+}
+
 .left-container, .right-container {
     display: flex;
     flex-direction: column;
@@ -38,15 +46,6 @@ html, body {
     align-items: center;
 }   
 
-/*.row0, .row1 {
-    border-bottom: var(--game-border);
-}
-
-.col0, .col1 {
-    border-right: var(--game-border);
-}
-*/
-
 .place-marker-animation {
     animation: placeMarker 0.5s forwards;
 }
@@ -67,7 +66,6 @@ html, body {
     text-align: center;
     font-size: 3rem;
     font-weight: 900;
-    margin-bottom: 20px;
 }
 
 .hidden {
@@ -88,4 +86,10 @@ html, body {
 
 .invisible {
     opacity: 0;
+}
+
+.play-again-button {
+    font-size: 2rem;
+    background-color: orange;
+    border-radius: 10px;
 }
