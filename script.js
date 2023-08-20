@@ -214,7 +214,6 @@ for (let i = 0; i < GRID_SIZE; i++) {
 
         cell.addEventListener("click", e =>  {
             if (!isPlayerTurn || gameOver) return;
-            toggleCurrentPlayerUI();
             playerTurn(e).then(() => {
                 checkGameOver();
                 return changePlayerImage("man-raising-hand.png");
@@ -251,6 +250,7 @@ function playerTurn(e) {
     const [row, col] = game.getRowColFromIndex(e.target.id);
     game.getPlayer().selectCell(row, col);
     isPlayerTurn = !isPlayerTurn;
+    toggleCurrentPlayerUI();
     return placeMarker(e.target, "x");
 }
 
@@ -262,6 +262,7 @@ function cpuTurn() {
     return new Promise(() => {
         setTimeout(() => {
             placeMarker(cell, cpu.getMark());
+            toggleCurrentPlayerUI();
             isPlayerTurn = !isPlayerTurn;
         }, 500);
     });
