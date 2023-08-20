@@ -209,16 +209,18 @@ playAgainButton.addEventListener('click', () => {
 for (let i = 0; i < GRID_SIZE; i++) {
     for (let j = 0; j < GRID_SIZE; j++) {
         const cell = document.createElement("div");
-        cell.classList.add("cell");
-        cell.classList.add(`row${i}`);
-        cell.classList.add(`col${j}`);
+        cell.classList.add("cell", `row${i}`, `col${j}`);
         cell.id = `${i * GRID_SIZE + j}`;
 
         cell.addEventListener("click", e =>  {
             if (!isPlayerTurn || gameOver) return;
             toggleCurrentPlayerUI();
-            playerTurn(e).then(() => checkGameOver());
-            cpuTurn().then(() => checkGameOver());
+            playerTurn(e).then(() => {
+                checkGameOver();
+                return changePlayerImage("man-raising-hand.png");
+            })
+            .then(() => cpuTurn())
+            .then(() => checkGameOver());
         });
         grid.appendChild(cell);
     }
@@ -241,12 +243,11 @@ function startGame() {
     isPlayerTurn = true;
     playAgainButton.classList.add("hidden");
     
-    for (const child of grid.children) {
-        child.innerHTML = "";
-    }
+    for (const child of grid.children) child.innerHTML = "";
 }
 
 function playerTurn(e) {
+    if (gameOver) return;
     const [row, col] = game.getRowColFromIndex(e.target.id);
     game.getPlayer().selectCell(row, col);
     isPlayerTurn = !isPlayerTurn;
@@ -254,7 +255,7 @@ function playerTurn(e) {
 }
 
 function cpuTurn() {
-    changePlayerImage("man-raising-hand.png");
+    if (gameOver) return;
     const cpu = game.getCPU();
     const [row, col] = cpu.selectCell();
     const cell = grid.children[game.getIndexFromRowCol(row, col)];
