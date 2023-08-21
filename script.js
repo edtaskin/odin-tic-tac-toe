@@ -39,6 +39,7 @@ const game = (() => {
             return setCell(row, col, val);
         }
         const containsTriplet = function() {
+            console.log(`triplet in checkGameOver: ${_triplet}`);
             if (_triplet) return _triplet;
             for (let i = 0; i < winningTriplets.length; i++) {
                 const [c1, c2, c3] = winningTriplets[i];
@@ -47,6 +48,7 @@ const game = (() => {
                     getCellByIndex(c1) === getCellByIndex(c2) &&
                     getCellByIndex(c2) === getCellByIndex(c3)) {
                     _triplet = winningTriplets[i];
+                    console.log(`Found triplet: ${_triplet}`);
                     return _triplet;
                 }   
             }
@@ -128,11 +130,12 @@ const game = (() => {
     })();
 
     function checkGameOver() {
-        return board.isFull() || board.containsTriplet();
+        console.log(`Board contains triplet? ${board.containsTriplet()}`);
+        return board.isFull() || board.containsTriplet() ;
     }
 
     function endGame() {
-        if (board.isFull()) return TIE;
+        if (!board.containsTriplet() && board.isFull()) return TIE;
         const triplet = board.containsTriplet();
         if (board.getCellByIndex(triplet[0]) === player.getMark()) return P_WIN;
         else return P_LOSE;
@@ -198,7 +201,7 @@ const isCPUTurnContainer = document.querySelector(".right-container .is-current-
 const playAgainButton = document.querySelector(".play-again-button");
 
 let gameOver = false;
-let isPlayerTurn = true;
+//let isPlayerTurn = true;
 
 playAgainButton.addEventListener('click', () => {
     if (!gameOver) return;
@@ -213,13 +216,20 @@ for (let i = 0; i < GRID_SIZE; i++) {
         cell.id = `${i * GRID_SIZE + j}`;
 
         cell.addEventListener("click", e =>  {
-            if (!isPlayerTurn || gameOver) return;
+            if (!game.isPlayerTurn() || gameOver) return;
             playerTurn(e).then(() => {
+                console.log("HERE1");
                 checkGameOver();
                 return changePlayerImage("man-raising-hand.png");
             })
-            .then(() => cpuTurn())
-            .then(() => checkGameOver());
+            .then(() => {
+                console.log("HERE2");
+                return cpuTurn();
+            })
+            .then(() => {
+                console.log("HERE3");
+                checkGameOver();
+            });
         });
         grid.appendChild(cell);
     }
@@ -239,7 +249,7 @@ function startGame() {
     setPlayers();
     hideGameOverMessages();
     gameOver = false;
-    isPlayerTurn = true;
+    //isPlayerTurn = true;
     playAgainButton.classList.add("hidden");
     
     for (const child of grid.children) child.innerHTML = "";
@@ -249,7 +259,6 @@ function playerTurn(e) {
     if (gameOver) return;
     const [row, col] = game.getRowColFromIndex(e.target.id);
     game.getPlayer().selectCell(row, col);
-    isPlayerTurn = !isPlayerTurn;
     toggleCurrentPlayerUI();
     return placeMarker(e.target, "x");
 }
@@ -259,18 +268,20 @@ function cpuTurn() {
     const cpu = game.getCPU();
     const [row, col] = cpu.selectCell();
     const cell = grid.children[game.getIndexFromRowCol(row, col)];
-    return new Promise(() => {
+    return new Promise((resolve) => {
         setTimeout(() => {
-            placeMarker(cell, cpu.getMark());
             toggleCurrentPlayerUI();
-            isPlayerTurn = !isPlayerTurn;
+            placeMarker(cell, cpu.getMark()).then(() => resolve());
         }, 500);
     });
 }
 
 
 function checkGameOver() {
+    console.log("---------------");
+    console.log(`${!game.isPlayerTurn() ? "Player Turn" : "CPU Turn"}`);
     if (!game.checkGameOver()) return;
+    //isPlayerTurn = !isPlayerTurn;
     const result = game.endGame();
     if (result === game.TIE) {
         tieMsg.classList.remove("hidden");
