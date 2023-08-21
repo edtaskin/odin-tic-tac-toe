@@ -5,6 +5,10 @@ html, body {
     padding: 0;
 }
 
+body {
+    height: 100%;
+}
+
 header {
     margin-top: 30px;
     width: 100%;
