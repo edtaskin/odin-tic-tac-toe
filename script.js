@@ -39,7 +39,6 @@ const game = (() => {
             return setCell(row, col, val);
         }
         const containsTriplet = function() {
-            console.log(`triplet in checkGameOver: ${_triplet}`);
             if (_triplet) return _triplet;
             for (let i = 0; i < winningTriplets.length; i++) {
                 const [c1, c2, c3] = winningTriplets[i];
@@ -48,7 +47,6 @@ const game = (() => {
                     getCellByIndex(c1) === getCellByIndex(c2) &&
                     getCellByIndex(c2) === getCellByIndex(c3)) {
                     _triplet = winningTriplets[i];
-                    console.log(`Found triplet: ${_triplet}`);
                     return _triplet;
                 }   
             }
@@ -130,7 +128,6 @@ const game = (() => {
     })();
 
     function checkGameOver() {
-        console.log(`Board contains triplet? ${board.containsTriplet()}`);
         return board.isFull() || board.containsTriplet() ;
     }
 
@@ -139,6 +136,10 @@ const game = (() => {
         const triplet = board.containsTriplet();
         if (board.getCellByIndex(triplet[0]) === player.getMark()) return P_WIN;
         else return P_LOSE;
+    }
+
+    const getBoard = function() {
+        return board;
     }
 
     const getPlayer = function() {
@@ -174,6 +175,7 @@ const game = (() => {
         TIE,
         P_WIN,
         P_LOSE,
+        getBoard,
         getPlayer,
         getCPU,
         isPlayerTurn,
@@ -201,7 +203,7 @@ const isCPUTurnContainer = document.querySelector(".right-container .is-current-
 const playAgainButton = document.querySelector(".play-again-button");
 
 let gameOver = false;
-//let isPlayerTurn = true;
+let allowClicks = true;
 
 playAgainButton.addEventListener('click', () => {
     if (!gameOver) return;
@@ -214,28 +216,30 @@ for (let i = 0; i < GRID_SIZE; i++) {
         const cell = document.createElement("div");
         cell.classList.add("cell", `row${i}`, `col${j}`);
         cell.id = `${i * GRID_SIZE + j}`;
-
-        cell.addEventListener("click", e =>  {
-            if (!game.isPlayerTurn() || gameOver) return;
-            playerTurn(e).then(() => {
-                console.log("HERE1");
-                checkGameOver();
-                return changePlayerImage("man-raising-hand.png");
-            })
-            .then(() => {
-                console.log("HERE2");
-                return cpuTurn();
-            })
-            .then(() => {
-                console.log("HERE3");
-                checkGameOver();
-            });
-        });
+        cell.addEventListener("click", simulateTurn);
         grid.appendChild(cell);
     }
 }
 
 startGame();
+
+function simulateTurn(e) {
+    if (!allowClicks || gameOver) return;
+    const target = e.target.tagName === "DIV" ? e.target : e.target.parentNode;
+    if (game.getBoard().getCellByIndex(target.id) !== "") return;
+
+    allowClicks = !allowClicks;
+    playerTurn(e)
+    .then(() => {
+        checkGameOver();
+        return cpuTurn();
+    })
+    .then(() => {
+        checkGameOver();
+        allowClicks = !allowClicks;
+        console.log(e.target, e.target.parentNode);
+    });
+}
 
 function setPlayers() {
     placeImage(playerContainer, "man-raising-hand.png");
@@ -249,7 +253,7 @@ function startGame() {
     setPlayers();
     hideGameOverMessages();
     gameOver = false;
-    //isPlayerTurn = true;
+    allowClicks = true;
     playAgainButton.classList.add("hidden");
     
     for (const child of grid.children) child.innerHTML = "";
@@ -278,10 +282,7 @@ function cpuTurn() {
 
 
 function checkGameOver() {
-    console.log("---------------");
-    console.log(`${!game.isPlayerTurn() ? "Player Turn" : "CPU Turn"}`);
     if (!game.checkGameOver()) return;
-    //isPlayerTurn = !isPlayerTurn;
     const result = game.endGame();
     if (result === game.TIE) {
         tieMsg.classList.remove("hidden");
