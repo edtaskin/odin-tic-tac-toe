@@ -237,7 +237,6 @@ function simulateTurn(e) {
     .then(() => {
         checkGameOver();
         allowClicks = !allowClicks;
-        console.log(e.target, e.target.parentNode);
     });
 }
 
