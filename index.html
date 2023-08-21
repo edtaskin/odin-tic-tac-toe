@@ -11,15 +11,17 @@
     <link href="https://fonts.googleapis.com/css2?family=Victor+Mono&display=swap" rel="stylesheet">
 </head>
 <body>
+    <header>
+        <div class="game-over-msg hidden" id="lose">YOU LOSE!</div>
+        <div class="game-over-msg hidden" id="win">YOU WIN!</div>
+        <div class="game-over-msg hidden" id="tie">TIE!</div>
+    </header>
     <div class="main-container">
         <div class="left-container">
             <div class="player-container"></div>
             <div class="is-current-player"></div>
         </div>
         <div class="middle-container">
-            <div class="game-over-msg hidden" id="lose">YOU LOSE!</div>
-            <div class="game-over-msg hidden" id="win">YOU WIN!</div>
-            <div class="game-over-msg hidden" id="tie">TIE!</div>
             <div class="game-grid-container"></div>
             <button class="play-again-button hidden">PLAY AGAIN</button>
         </div>
